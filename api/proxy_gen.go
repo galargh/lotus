@@ -364,6 +364,8 @@ type FullNodeStruct struct {
 
 		StateLookupID func(p0 context.Context, p1 address.Address, p2 types.TipSetKey) (address.Address, error) `perm:"read"`
 
+		StateLookupRobustAddress func(p0 context.Context, p1 address.Address, p2 types.TipSetKey) (address.Address, error) `perm:"read"`
+
 		StateMarketBalance func(p0 context.Context, p1 address.Address, p2 types.TipSetKey) (MarketBalance, error) `perm:"read"`
 
 		StateMarketDeals func(p0 context.Context, p1 types.TipSetKey) (map[string]MarketDeal, error) `perm:"read"`
@@ -529,6 +531,8 @@ type GatewayStruct struct {
 		StateListMiners func(p0 context.Context, p1 types.TipSetKey) ([]address.Address, error) ``
 
 		StateLookupID func(p0 context.Context, p1 address.Address, p2 types.TipSetKey) (address.Address, error) ``
+
+		StateLookupRobustAddress func(p0 context.Context, p1 address.Address, p2 types.TipSetKey) (address.Address, error) ``
 
 		StateMarketBalance func(p0 context.Context, p1 address.Address, p2 types.TipSetKey) (MarketBalance, error) ``
 
@@ -2528,6 +2532,17 @@ func (s *FullNodeStub) StateLookupID(p0 context.Context, p1 address.Address, p2 
 	return *new(address.Address), ErrNotSupported
 }
 
+func (s *FullNodeStruct) StateLookupRobustAddress(p0 context.Context, p1 address.Address, p2 types.TipSetKey) (address.Address, error) {
+	if s.Internal.StateLookupRobustAddress == nil {
+		return *new(address.Address), ErrNotSupported
+	}
+	return s.Internal.StateLookupRobustAddress(p0, p1, p2)
+}
+
+func (s *FullNodeStub) StateLookupRobustAddress(p0 context.Context, p1 address.Address, p2 types.TipSetKey) (address.Address, error) {
+	return *new(address.Address), ErrNotSupported
+}
+
 func (s *FullNodeStruct) StateMarketBalance(p0 context.Context, p1 address.Address, p2 types.TipSetKey) (MarketBalance, error) {
 	if s.Internal.StateMarketBalance == nil {
 		return *new(MarketBalance), ErrNotSupported
@@ -3383,6 +3398,17 @@ func (s *GatewayStruct) StateLookupID(p0 context.Context, p1 address.Address, p2
 }
 
 func (s *GatewayStub) StateLookupID(p0 context.Context, p1 address.Address, p2 types.TipSetKey) (address.Address, error) {
+	return *new(address.Address), ErrNotSupported
+}
+
+func (s *GatewayStruct) StateLookupRobustAddress(p0 context.Context, p1 address.Address, p2 types.TipSetKey) (address.Address, error) {
+	if s.Internal.StateLookupRobustAddress == nil {
+		return *new(address.Address), ErrNotSupported
+	}
+	return s.Internal.StateLookupRobustAddress(p0, p1, p2)
+}
+
+func (s *GatewayStub) StateLookupRobustAddress(p0 context.Context, p1 address.Address, p2 types.TipSetKey) (address.Address, error) {
 	return *new(address.Address), ErrNotSupported
 }
 

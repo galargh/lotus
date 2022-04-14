@@ -102,3 +102,23 @@ func TestSelfSentTxnV14(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, exitcode.Ok, mLookup.Receipt.ExitCode)
 }
+
+func TestStateLookupRobustAddress(t *testing.T) {
+	ctx := context.Background()
+	kit.QuietMiningLogs()
+
+	client15, miner, ens := kit.EnsembleMinimal(t, kit.MockProofs(), kit.GenesisNetworkVersion(network.Version15))
+	ens.InterconnectAll().BeginMining(10 * time.Millisecond)
+
+	addr, err := miner.ActorAddress(ctx)
+	require.NoError(t, err)
+
+	// Look up the robust address
+	robAddr, err := client15.StateLookupRobustAddress(ctx, addr, types.EmptyTSK)
+	require.NoError(t, err)
+
+	// Check the id address for the given robust address and make sure it matches
+	idAddr, err := client15.StateLookupID(ctx, robAddr, types.EmptyTSK)
+	require.NoError(t, err)
+	require.Equal(t, addr, idAddr)
+}

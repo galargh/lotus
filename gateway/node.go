@@ -57,6 +57,7 @@ type TargetAPI interface {
 	StateDealProviderCollateralBounds(ctx context.Context, size abi.PaddedPieceSize, verified bool, tsk types.TipSetKey) (api.DealCollateralBounds, error)
 	StateGetActor(ctx context.Context, actor address.Address, ts types.TipSetKey) (*types.Actor, error)
 	StateLookupID(ctx context.Context, addr address.Address, tsk types.TipSetKey) (address.Address, error)
+	StateLookupRobustAddress(ctx context.Context, addr address.Address, tsk types.TipSetKey) (address.Address, error)
 	StateListMiners(ctx context.Context, tsk types.TipSetKey) ([]address.Address, error)
 	StateMarketBalance(ctx context.Context, addr address.Address, tsk types.TipSetKey) (api.MarketBalance, error)
 	StateMarketStorageDeal(ctx context.Context, dealId abi.DealID, tsk types.TipSetKey) (*api.MarketDeal, error)
@@ -336,6 +337,14 @@ func (gw *Node) StateLookupID(ctx context.Context, addr address.Address, tsk typ
 	}
 
 	return gw.target.StateLookupID(ctx, addr, tsk)
+}
+
+func (gw *Node) StateLookupRobustAddress(ctx context.Context, addr address.Address, tsk types.TipSetKey) (address.Address, error) {
+	if err := gw.checkTipsetKey(ctx, tsk); err != nil {
+		return address.Undef, err
+	}
+
+	return gw.target.StateLookupRobustAddress(ctx, addr, tsk)
 }
 
 func (gw *Node) StateMarketBalance(ctx context.Context, addr address.Address, tsk types.TipSetKey) (api.MarketBalance, error) {

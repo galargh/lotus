@@ -50,6 +50,7 @@ type StateModuleAPI interface {
 	StateGetActor(ctx context.Context, actor address.Address, tsk types.TipSetKey) (*types.Actor, error)
 	StateListMiners(ctx context.Context, tsk types.TipSetKey) ([]address.Address, error)
 	StateLookupID(ctx context.Context, addr address.Address, tsk types.TipSetKey) (address.Address, error)
+	StateLookupRobustAddress(ctx context.Context, addr address.Address, tsk types.TipSetKey) (address.Address, error)
 	StateMarketBalance(ctx context.Context, addr address.Address, tsk types.TipSetKey) (api.MarketBalance, error)
 	StateMarketStorageDeal(ctx context.Context, dealId abi.DealID, tsk types.TipSetKey) (*api.MarketDeal, error)
 	StateMinerInfo(ctx context.Context, actor address.Address, tsk types.TipSetKey) (miner.MinerInfo, error)
@@ -447,6 +448,21 @@ func (m *StateModule) StateLookupID(ctx context.Context, addr address.Address, t
 	}
 
 	return m.StateManager.LookupID(ctx, addr, ts)
+}
+
+func (m *StateModule) StateLookupRobustAddress(ctx context.Context, addr address.Address, tsk types.TipSetKey) (address.Address, error) {
+	ts, err := m.Chain.GetTipSetFromKey(ctx, tsk)
+	if err != nil {
+		return address.Undef, xerrors.Errorf("loading tipset %s: %w", tsk, err)
+	}
+	if ts.Height() > policy.ChainFinality {
+		ts, err = m.StateManager.ChainStore().GetTipsetByHeight(ctx, ts.Height()-policy.ChainFinality, ts, true)
+		if err != nil {
+			return address.Undef, xerrors.Errorf("failed to load lookback tipset: %w", err)
+		}
+	}
+
+	return m.StateManager.LookupRobustAddress(ctx, addr, ts)
 }
 
 func (m *StateModule) StateAccountKey(ctx context.Context, addr address.Address, tsk types.TipSetKey) (address.Address, error) {
