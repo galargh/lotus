@@ -60,7 +60,7 @@ jobs:
               projects+=($project)
             fi
           done
-          echo "projects=$(echo "${projects[@]}" | jq -c .)" | tee -a $GITHUB_OUTPUT
+          echo "projects=$(echo "${projects[@]}" | jq -R -c 'split(" ")')" | tee -a $GITHUB_OUTPUT
   build:
     needs: [check]
     if: needs.check.outputs.projects != '[]'
