@@ -107,12 +107,12 @@ jobs:
           expected: ${{ steps.expected.outputs.version }}
         run: |
           for bin in lotus lotus-miner lotus-worker; do
-            if [[ -f $dir/$bin ]]; then
-              echo "Checking $bin version"
+            if [[ -f ./$bin ]]; then
+              echo "Checking ./$bin version"
               chmod +x ./$bin
               actual=$(./$bin --version)
               if [[ "$actual" != "$expected" ]]; then
-                echo "::error title=Version Mismatch::Expected $expected, got $actual ($dir/$bin)"
+                echo "::error title=Version Mismatch::Expected $expected, got $actual (./$bin)"
                 exit 1
               fi
             fi
