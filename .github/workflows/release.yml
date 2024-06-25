@@ -94,6 +94,29 @@ jobs:
         run: make lotus-miner lotus-worker
       - if: matrix.project == 'node' && runner.os == 'macOS'
         run: otool -hv lotus
+      - id: expected
+        env:
+          LOTUS_VERSION_IGNORE_COMMIT: 1
+        run: |
+          go run cmd/release/main.go --json ${{ matrix.project }} version |
+            jq -r .msg |
+            xargs -I {} echo "version={}" |
+            tee -a $GITHUB_OUTPUT
+      - env:
+          LOTUS_VERSION_IGNORE_COMMIT: 1
+          expected: ${{ steps.expected.outputs.version }}
+        run: |
+          for bin in lotus lotus-miner lotus-worker; do
+            if [[ -f $dir/$bin ]]; then
+              echo "Checking $bin version"
+              chmod +x ./$bin
+              actual=$(./$bin --version)
+              if [[ "$actual" != "$expected" ]]; then
+                echo "::error title=Version Mismatch::Expected $expected, got $actual ($dir/$bin)"
+                exit 1
+              fi
+            fi
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: lotus-${{ matrix.project }}-${{ runner.os }}-${{ runner.arch }}
@@ -142,36 +165,17 @@ jobs:
           LOTUS_VERSION_IGNORE_COMMIT: 1
         run: |
           version="$(go run cmd/release/main.go --json ${{ matrix.project }} version | jq -r .msg)"
-          if [[ "${{ matrix.project}}" == "miner" ]]; then
-            tag="miner/$version"
-            latest="$(git tag -l 'miner/v*' | sort -V | tail -n1)"
-          elif [[ "${{ matrix.project}}" == "node" ]]; then
+          if [[ "${{ matrix.project}}" == "node" ]]; then
             tag="$version"
             latest="$(git tag -l 'v*' | sort -V | tail -n1)"
           else
-            echo "::error title=Unknown Project::${{ matrix.project }}"
-            exit 1
+            tag="${{ matrix.project }}/$version"
+            latest="$(git tag -l '${{ matrix.project }}/v*' | sort -V | tail -n1)"
           fi
           latest="$(echo -e "$latest\n$version" | sort -V | tail -n1)"
           echo "version=$version" | tee -a $GITHUB_OUTPUT
           echo "latest=$latest" | tee -a $GITHUB_OUTPUT
           echo "tag=$tag" | tee -a $GITHUB_OUTPUT
-      - env:
-          LOTUS_VERSION_IGNORE_COMMIT: 1
-          expected: ${{ steps.meta.outputs.version }}
-        run: |
-          for dir in linux_amd64_v1 darwin_amd64_v1 darwin_arm64; do
-            for bin in lotus lotus-miner lotus-worker; do
-              if [[ -f $dir/$bin ]]; then
-                chmod +x ./$dir/$bin
-                actual=$(./$dir/$bin --version)
-                if [[ "$actual" != "$expected" ]]; then
-                  echo "::error title=Version Mismatch::Expected $expected, got $actual ($dir/$bin)"
-                  exit 1
-                fi
-              fi
-            done
-          done
       - uses: goreleaser/goreleaser-action@7ec5c2b0c6cdda6e8bbb49444bc797dd33d74dd8 # v5.0.0
         with:
           distribution: goreleaser-pro
