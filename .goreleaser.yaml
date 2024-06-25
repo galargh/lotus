@@ -27,7 +27,7 @@ builds:
         goarch: arm64
     prebuilt:
       path: '{{ .Env.GITHUB_WORKSPACE }}/{{ .Os }}_{{ .Arch }}{{ with .Amd64 }}_{{ . }}{{ end }}/lotus'
-    skip: '{{ .Env.PROJECT != "node" }}'
+    skip: {{ .Env.PROJECT ne "node" }}
   - id: lotus-miner
     binary: lotus-miner
     builder: prebuilt
@@ -44,7 +44,7 @@ builds:
         goarch: arm64
     prebuilt:
       path: '{{ .Env.GITHUB_WORKSPACE }}/{{ .Os }}_{{ .Arch }}{{ with .Amd64 }}_{{ . }}{{ end }}/lotus-miner'
-    skip: '{{ .Env.PROJECT != "miner" }}'
+    skip: {{ .Env.PROJECT ne "miner" }}
   - id: lotus-worker
     binary: lotus-worker
     builder: prebuilt
@@ -61,7 +61,7 @@ builds:
         goarch: arm64
     prebuilt:
       path: '{{ .Env.GITHUB_WORKSPACE }}/{{ .Os }}_{{ .Arch }}{{ with .Amd64 }}_{{ . }}{{ end }}/lotus-worker'
-    skip: '{{ .Env.PROJECT != "miner" }}'
+    skip: {{ .Env.PROJECT ne "miner" }}
 
 archives:
   - id: primary
@@ -77,11 +77,11 @@ release:
   github:
     owner: filecoin-project
     name: lotus
-  draft: "{{ .Env.IS_DRAFT }}"
+  draft: {{ .Env.IS_DRAFT eq "true" }}
   header: "{{ .Env.HEADER }}"
-  make_latest: "${{ .Env.IS_LATEST }}"
+  make_latest: {{ .Env.IS_LATEST eq "true" }}
   name_template: "{{ .Env.VERSION }}"
-  prerelease: "${{ .Env.VERSION | strings.hasSuffix '-rc' }}"
+  prerelease: {{ .Env.IS_RC eq "true" }}
   replace_existing_artifacts: true
   # TODO(p0): Test if not replacing existing drafts updates them instead of failing the release
   replace_existing_draft: false
