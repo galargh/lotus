@@ -163,6 +163,7 @@ jobs:
           for dir in linux_amd64_v1 darwin_amd64_v1 darwin_arm64; do
             for bin in lotus lotus-miner lotus-worker; do
               if [[ -f $dir/$bin ]]; then
+                chmod +x ./$dir/$bin
                 actual=$(./$dir/$bin --version)
                 if [[ "$actual" != "$expected" ]]; then
                   echo "::error title=Version Mismatch::Expected $expected, got $actual ($dir/$bin)"
