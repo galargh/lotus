@@ -110,7 +110,7 @@ jobs:
             if [[ -f ./$bin ]]; then
               echo "Checking ./$bin version"
               chmod +x ./$bin
-              actual=$(./$bin --version)
+              actual=$(./$bin --version | cut -d' ' -f3)
               if [[ "$actual" != "$expected" ]]; then
                 echo "::error title=Version Mismatch::Expected $expected, got $actual (./$bin)"
                 exit 1
