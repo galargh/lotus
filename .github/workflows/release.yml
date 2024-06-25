@@ -70,16 +70,20 @@ jobs:
       fail-fast: false
       matrix:
         project: ${{ fromJSON(needs.check.outputs.projects) }}
-        include:
+        runner:
+          - ubuntu-latest
+          - macos-13
+          - macos-14
+        arch:
+          - X64
+          - ARM64
+        exclude:
           - runner: ubuntu-latest
-            os: Linux
-            arch: X64
-          - runner: macos-13
-            os: macOS
-            arch: X64
-          - runner: macos-14
-            os: macOS
             arch: ARM64
+          - runner: macos-13
+            arch: ARM64
+          - runner: macos-14
+            arch: X64
     steps:
       - env:
           OS: ${{ matrix.os }}
@@ -105,15 +109,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: make lotus-miner lotus-worker
-      - if: matrix.project == 'lotus' && runner.os == 'macOS'
+      - if: matrix.project == 'node' && runner.os == 'macOS'
         run: otool -hv lotus
       - uses: actions/upload-artifact@v4
         with:
           name: lotus-${{ matrix.project }}-${{ matrix.os }}-${{ matrix.arch }}
           path: |
-            lotus/lotus
-            lotus/lotus-miner
-            lotus/lotus-worker
+            lotus
+            lotus-miner
+            lotus-worker
   release:
     needs: [check, build]
     if: needs.check.outputs.projects != '[]'
