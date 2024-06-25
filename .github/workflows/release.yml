@@ -165,7 +165,7 @@ jobs:
           LOTUS_VERSION_IGNORE_COMMIT: 1
         run: |
           version="$(go run cmd/release/main.go --json ${{ matrix.project }} version | jq -r .msg)"
-          if [[ "${{ matrix.project}}" == "node" ]]; then
+          if [[ "${{ matrix.project }}" == "node" ]]; then
             tag="$version"
             latest="$(git tag -l 'v*' | sort -V | tail -n1)"
           else
@@ -173,9 +173,15 @@ jobs:
             latest="$(git tag -l '${{ matrix.project }}/v*' | sort -V | tail -n1)"
           fi
           latest="$(echo -e "$latest\n$version" | sort -V | tail -n1)"
+          if [[ $version =~ -rc$ ]]; then
+            is_rc=true
+          else
+            is_rc=false
+          fi
           echo "version=$version" | tee -a $GITHUB_OUTPUT
           echo "latest=$latest" | tee -a $GITHUB_OUTPUT
           echo "tag=$tag" | tee -a $GITHUB_OUTPUT
+          echo "is_rc=$is_rc" | tee -a $GITHUB_OUTPUT
       - uses: goreleaser/goreleaser-action@7ec5c2b0c6cdda6e8bbb49444bc797dd33d74dd8 # v5.0.0
         with:
           distribution: goreleaser-pro
@@ -188,6 +194,7 @@ jobs:
           VERSION: ${{ steps.meta.outputs.version }}
           IS_LATEST: ${{ steps.meta.outputs.latest == steps.meta.outputs.version }}
           IS_DRAFT: ${{ github.event_name == 'pull_request' }}
+          IS_RC: ${{ github.meta.outputs.is_rc }}
           TARGET_COMMITISH: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.sha }}
           HEADER: '' # TODO(p3): Extract release notes from CHANGELOG.md
       - run: |
