@@ -35,6 +35,7 @@ jobs:
       - id: projects
         env:
           TARGET_REF: ${{ github.base_ref || github.ref }}
+          LOTUS_VERSION_IGNORE_COMMIT: 1
         run: |
           projects=()
           for project in node miner; do
@@ -50,12 +51,12 @@ jobs:
               continue
             fi
             if [[ "$project" == "node" ]]; then
-              current_version_exists=$(git tag -l 'v*' | grep -q $current_version)
+              current_version_exists=$(git tag -l 'v*' | grep -x $current_version | wc -l)
             else
-              current_version_exists=$(git tag -l '$project/v*' | grep -q $current_version)
+              current_version_exists=$(git tag -l "$project/v*" | grep -x $current_version | wc -l)
             fi
             echo "${project}_current_version_exists=$current_version_exists"
-            if [[ ! $current_version_exists ]]; then
+            if [[ $current_version_exists == '0' ]]; then
               projects+=($project)
             fi
           done
@@ -150,6 +151,8 @@ jobs:
           name: kubo
           version: v0.16.0
       - id: meta
+        env:
+          LOTUS_VERSION_IGNORE_COMMIT: 1
         run: |
           version="$(go run cmd/release/main.go --json ${{ matrix.project }} version | jq -r .msg)"
           if [[ "${{ matrix.project}}" == "miner" ]]; then
@@ -167,6 +170,7 @@ jobs:
           echo "latest=$latest" | tee -a $GITHUB_OUTPUT
           echo "tag=$tag" | tee -a $GITHUB_OUTPUT
       - env:
+          LOTUS_VERSION_IGNORE_COMMIT: 1
           expected: ${{ steps.meta.outputs.version }}
         run: |
           for dir in linux_amd64_v1 darwin_amd64_v1 darwin_arm64; do
