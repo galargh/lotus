@@ -51,9 +51,9 @@ jobs:
               continue
             fi
             if [[ "$project" == "node" ]]; then
-              current_version_exists=$(git tag -l 'v*' | grep -x $current_version | wc -l)
+              current_version_exists=$(git tag -l 'v*' | grep -xq $current_version && echo 1 || echo 0)
             else
-              current_version_exists=$(git tag -l "$project/v*" | grep -x $current_version | wc -l)
+              current_version_exists=$(git tag -l "$project/v*" | grep -xq $current_version && echo 1 || echo 0)
             fi
             echo "${project}_current_version_exists=$current_version_exists"
             if [[ $current_version_exists == '0' ]]; then
