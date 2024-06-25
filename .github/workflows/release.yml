@@ -188,13 +188,14 @@ jobs:
           version: 2.0.1
           args: release --clean ${{ env.PUBLISH == 'false' && '--snapshot' || '' }}
         env:
+          PROJECT: ${{ matrix.project }}
           GITHUB_TOKEN: ${{ env.PUBLISH == 'true' && secrets.GORELEASER_GITUB_TOKEN || github.token || '' }}
           GORELEASER_KEY: ${{ env.PUBLISH == 'true' && secrets.GORELEASER_KEY || '' }}
           TAG: ${{ steps.meta.outputs.tag }}
           VERSION: ${{ steps.meta.outputs.version }}
           IS_LATEST: ${{ steps.meta.outputs.latest == steps.meta.outputs.version }}
           IS_DRAFT: ${{ github.event_name == 'pull_request' }}
-          IS_RC: ${{ github.meta.outputs.is_rc }}
+          IS_RC: ${{ steps.meta.outputs.is_rc }}
           TARGET_COMMITISH: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.sha }}
           HEADER: '' # TODO(p3): Extract release notes from CHANGELOG.md
       - run: |
