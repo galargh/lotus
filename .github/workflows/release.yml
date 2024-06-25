@@ -64,35 +64,18 @@ jobs:
   build:
     needs: [check]
     if: needs.check.outputs.projects != '[]'
-    name: Build ${{ matrix.project }} (${{ matrix.os }}/${{ matrix.arch }})
+    name: Build ${{ matrix.project }} (${{ runner.os }}/${{ runner.arch }})
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
         project: ${{ fromJSON(needs.check.outputs.projects) }}
         runner:
-          - ubuntu-latest
-          - macos-13
-          - macos-14
-        arch:
-          - X64
-          - ARM64
-        exclude:
-          - runner: ubuntu-latest
-            arch: ARM64
-          - runner: macos-13
-            arch: ARM64
-          - runner: macos-14
-            arch: X64
+          - ubuntu-latest # Linux X64
+          - macos-13 # MacOs X64
+          - macos-14 # MacOS ARM64
     steps:
-      - env:
-          OS: ${{ matrix.os }}
-          ARCH: ${{ matrix.arch }}
-        run: |
-          if [[ "$OS" != "$RUNNER_OS" || "$ARCH" != "$RUNNER_ARCH" ]]; then
-            echo "::error title=Unexpected Runner::Expected $OS/$ARCH, got $RUNNER_OS/$RUNNER_ARCH"
-            exit 1
-          fi
+      - run: echo "Building on $RUNNER_OS/$RUNNER_ARCH"
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
@@ -113,7 +96,7 @@ jobs:
         run: otool -hv lotus
       - uses: actions/upload-artifact@v4
         with:
-          name: lotus-${{ matrix.project }}-${{ matrix.os }}-${{ matrix.arch }}
+          name: lotus-${{ matrix.project }}-${{ runner.os }}-${{ runner.arch }}
           path: |
             lotus
             lotus-miner
