@@ -89,28 +89,28 @@ release:
   target_commitish: "{{ .Env.TARGET_COMMITISH }}"
 
 # TODO(p0): Figure out how to perform partial Homebrew updates
-brews:
-  - repository:
-      owner: filecoin-project
-      name: homebrew-lotus
-      branch: master
-    ids:
-      - primary
-    install: |
-      bin.install "lotus"
-      bin.install "lotus-miner"
-      bin.install "lotus-worker"
-    test: |
-      system "#{bin}/lotus --version"
-      system "#{bin}/lotus-miner --version"
-      system "#{bin}/lotus-worker --version"
-    directory: Formula
-    homepage: "https://filecoin.io"
-    description: "A homebrew cask for installing filecoin-project/lotus on MacOS"
-    license: MIT
-    skip_upload: auto
-    dependencies:
-      - name: hwloc
+# brews:
+#   - repository:
+#       owner: filecoin-project
+#       name: homebrew-lotus
+#       branch: master
+#     ids:
+#       - primary
+#     install: |
+#       bin.install "lotus"
+#       bin.install "lotus-miner"
+#       bin.install "lotus-worker"
+#     test: |
+#       system "#{bin}/lotus --version"
+#       system "#{bin}/lotus-miner --version"
+#       system "#{bin}/lotus-worker --version"
+#     directory: Formula
+#     homepage: "https://filecoin.io"
+#     description: "A homebrew cask for installing filecoin-project/lotus on MacOS"
+#     license: MIT
+#     skip_upload: auto
+#     dependencies:
+#       - name: hwloc
 
 # produced manually so we can include cid checksums
 checksum:
