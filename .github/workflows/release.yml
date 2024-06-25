@@ -64,7 +64,7 @@ jobs:
   build:
     needs: [check]
     if: needs.check.outputs.projects != '[]'
-    name: Build ${{ matrix.project }} (${{ runner.os }}/${{ runner.arch }})
+    name: Build ${{ matrix.project }} (${{ matrix.runner }})
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
