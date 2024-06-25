@@ -1,4 +1,5 @@
 # yaml-language-server: $schema=https://goreleaser.com/static/schema-pro.json
+# TODO(p0): Test if templating on boolean values is supported
 
 version: 2
 
@@ -8,12 +9,6 @@ universal_binaries:
   - id: lotus
     replace: true
     name_template: lotus
-  - id: lotus-miner
-    replace: true
-    name_template: lotus-miner
-  - id: lotus-worker
-    replace: true
-    name_template: lotus-worker
 
 builds:
   - id: lotus
@@ -32,6 +27,7 @@ builds:
         goarch: arm64
     prebuilt:
       path: '{{ .Env.GITHUB_WORKSPACE }}/{{ .Os }}_{{ .Arch }}{{ with .Amd64 }}_{{ . }}{{ end }}/lotus'
+    skip: '{{ .Env.PROJECT != "node" }}'
   - id: lotus-miner
     binary: lotus-miner
     builder: prebuilt
@@ -48,6 +44,7 @@ builds:
         goarch: arm64
     prebuilt:
       path: '{{ .Env.GITHUB_WORKSPACE }}/{{ .Os }}_{{ .Arch }}{{ with .Amd64 }}_{{ . }}{{ end }}/lotus-miner'
+    skip: '{{ .Env.PROJECT != "miner" }}'
   - id: lotus-worker
     binary: lotus-worker
     builder: prebuilt
@@ -64,12 +61,13 @@ builds:
         goarch: arm64
     prebuilt:
       path: '{{ .Env.GITHUB_WORKSPACE }}/{{ .Os }}_{{ .Arch }}{{ with .Amd64 }}_{{ . }}{{ end }}/lotus-worker'
+    skip: '{{ .Env.PROJECT != "miner" }}'
 
 archives:
   - id: primary
     format: tar.gz
     wrap_in_directory: true
-    name_template: "{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    name_template: "{{ .ProjectName }}_{{ .Env.VERSION }}_{{ .Os }}_{{ .Arch }}"
     files:
       # this is a dumb but required hack so it doesn't include the default files
       # https://github.com/goreleaser/goreleaser/issues/602
@@ -79,35 +77,44 @@ release:
   github:
     owner: filecoin-project
     name: lotus
-  prerelease: auto
-  name_template: "v{{.Version}}"
+  draft: "{{ .Env.IS_DRAFT }}"
+  header: "{{ .Env.HEADER }}"
+  make_latest: "${{ .Env.IS_LATEST }}"
+  name_template: "{{ .Env.VERSION }}"
+  prerelease: "${{ .Env.VERSION | strings.hasSuffix '-rc' }}"
+  replace_existing_artifacts: true
+  # TODO(p0): Test if not replacing existing drafts updates them instead of failing the release
+  replace_existing_draft: false
+  tag: "{{ .Env.TAG }}"
+  target_commitish: "{{ .Env.TARGET_COMMITISH }}"
 
-brews:
-  - repository:
-      owner: filecoin-project
-      name: homebrew-lotus
-      branch: master
-    ids:
-      - primary
-    install: |
-      bin.install "lotus"
-      bin.install "lotus-miner"
-      bin.install "lotus-worker"
-    test: |
-      system "#{bin}/lotus --version"
-      system "#{bin}/lotus-miner --version"
-      system "#{bin}/lotus-worker --version"
-    directory: Formula
-    homepage: "https://filecoin.io"
-    description: "A homebrew cask for installing filecoin-project/lotus on MacOS"
-    license: MIT
-    skip_upload: auto
-    dependencies:
-      - name: hwloc
+# TODO(p0): Figure out how to perform partial Homebrew updates
+# brews:
+#   - repository:
+#       owner: filecoin-project
+#       name: homebrew-lotus
+#       branch: master
+#     ids:
+#       - primary
+#     install: |
+#       bin.install "lotus"
+#       bin.install "lotus-miner"
+#       bin.install "lotus-worker"
+#     test: |
+#       system "#{bin}/lotus --version"
+#       system "#{bin}/lotus-miner --version"
+#       system "#{bin}/lotus-worker --version"
+#     directory: Formula
+#     homepage: "https://filecoin.io"
+#     description: "A homebrew cask for installing filecoin-project/lotus on MacOS"
+#     license: MIT
+#     skip_upload: auto
+#     dependencies:
+#       - name: hwloc
 
 # produced manually so we can include cid checksums
 checksum:
   disable: true
 
 snapshot:
-  name_template: "{{ .Version }}"
+  name_template: "{{ .Env.VERSION }}"
