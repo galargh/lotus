@@ -42,12 +42,6 @@ jobs:
             jq 'map(select(env.TARGET_REF == "refs/heads/releases" and .prerelease | not))' |
             jq -c '.' | xargs -I {} -0 echo "projects={}" |
             tee -a $GITHUB_OUTPUT
-  check-check:
-    needs: [check]
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo '${{ needs.check.outputs.projects }}'
-      - run: echo '${{ fromJSON(needs.check.outputs.projects).*.name }}'
   build:
     needs: [check]
     if: needs.check.outputs.projects != '[]'
@@ -68,7 +62,7 @@ jobs:
           projects: ${{ needs.check.outputs.projects }}
           name: ${{ matrix.project }}
         run: |
-          jq -nc 'env.projects | fromjson | map(select(.name == env.name))' |
+          jq -nc 'env.projects | fromjson | map(select(.name == env.name)) | .[0]' |
             xargs -I {} -0 echo "config={}" |
             tee -a $GITHUB_OUTPUT
       - uses: actions/checkout@v4
@@ -130,7 +124,7 @@ jobs:
           projects: ${{ needs.check.outputs.projects }}
           name: ${{ matrix.project }}
         run: |
-          jq -nc 'env.projects | fromjson | map(select(.name == env.name))' |
+          jq -nc 'env.projects | fromjson | map(select(.name == env.name)) | .[0]' |
             xargs -I {} -0 echo "config={}" |
             tee -a $GITHUB_OUTPUT
       - uses: actions/checkout@v4
