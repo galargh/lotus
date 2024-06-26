@@ -40,7 +40,7 @@ jobs:
             jq 'map(select(.version | endswith("-dev") | not))' |
             jq 'map(select(.released | not))' |
             jq 'map(select(env.TARGET_REF == "refs/heads/releases" and .prerelease | not))' |
-            jq -c '.' | xargs -I {} echo "projects={}" |
+            jq -c '.' | xargs -I {} -0 echo "projects={}" |
             tee -a $GITHUB_OUTPUT
   check-check:
     needs: [check]
@@ -69,7 +69,7 @@ jobs:
           name: ${{ matrix.project }}
         run: |
           jq -nc 'env.projects | fromjson | map(select(.name == env.name))' |
-            xargs -I {} echo "config={}" |
+            xargs -I {} -0 echo "config={}" |
             tee -a $GITHUB_OUTPUT
       - uses: actions/checkout@v4
         with:
@@ -131,7 +131,7 @@ jobs:
           name: ${{ matrix.project }}
         run: |
           jq -nc 'env.projects | fromjson | map(select(.name == env.name))' |
-            xargs -I {} echo "config={}" |
+            xargs -I {} -0 echo "config={}" |
             tee -a $GITHUB_OUTPUT
       - uses: actions/checkout@v4
         with:
