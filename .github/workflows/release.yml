@@ -42,6 +42,12 @@ jobs:
             jq 'map(select(env.TARGET_REF == "refs/heads/releases" and .prerelease | not))' |
             jq -c '.' | xargs -I {} echo "projects={}" |
             tee -a $GITHUB_OUTPUT
+  check-check:
+    needs: [check]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo '${{ needs.check.outputs.projects }}'
+      - run: echo '${{ fromJSON(needs.check.outputs.projects).*.name }}'
   build:
     needs: [check]
     if: needs.check.outputs.projects != '[]'
@@ -116,6 +122,8 @@ jobs:
       fail-fast: false
       matrix:
         project: ${{ fromJSON(needs.check.outputs.projects).*.name }}
+    env:
+      PUBLISH: ${{ github.event_name != 'pull_request' }}
     steps:
       - id: project
         env:
@@ -161,8 +169,8 @@ jobs:
           version: 2.0.1
           args: release --clean
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-          GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
+          GITHUB_TOKEN: ${{ env.PUBLISH == 'true' && github.token || '' }}
+          GORELEASER_KEY: ${{ env.PUBLISH == 'true' && secrets.GORELEASER_KEY || '' }}
           TAG: ${{ fromJSON(steps.project.outputs.config).tag }}
           VERSION: ${{ fromJSON(steps.project.outputs.config).version }}
           IS_LATEST: ${{ fromJSON(steps.project.outputs.config).latest }}
@@ -171,7 +179,8 @@ jobs:
           TARGET_COMMITISH: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.sha }}
           HEADER: '' # TODO(p3): Extract release notes from CHANGELOG.md
       - run: ./scripts/generate-checksums.sh
-      - env:
+      - if: env.PUBLISH == 'true'
+        env:
           GITHUB_TOKEN: ${{ github.token }}
           TAG: ${{ fromJSON(steps.project.outputs.config).tag }}
         run: ./scripts/publish-checksums.sh
