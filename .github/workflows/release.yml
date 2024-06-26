@@ -40,7 +40,7 @@ jobs:
             jq 'map(select(.version | endswith("-dev") | not))' |
             jq 'map(select(.released | not))' |
             jq 'map(select(env.TARGET_REF == "refs/heads/releases" and .prerelease | not))' |
-            xargs -I {} echo "projects={}" |
+            jq -c '.' | xargs -I {} echo "projects={}" |
             tee -a $GITHUB_OUTPUT
   build:
     needs: [check]
