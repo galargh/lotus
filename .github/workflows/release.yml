@@ -155,11 +155,11 @@ jobs:
       - if: matrix.project == 'node'
         uses: mikefarah/yq@f15500b20a1c991c8729870ba60a4dc3524b6a94 # v4.44.2
         with:
-          cmd: yq -i '.builds | map(select(.id == "lotus"))[0].skip = false' '.goreleaser.yaml'
+          cmd: yq -i '(.builds[] | select(.id == "lotus")).skip = false' '.goreleaser.yaml'
       - if: matrix.project == 'miner'
         uses: mikefarah/yq@f15500b20a1c991c8729870ba60a4dc3524b6a94 # v4.44.2
         with:
-          cmd: yq -i '.builds | map(select(.id == "lotus-miner" or .id == "lotus-worker"))[0].skip = false' '.goreleaser.yaml'
+          cmd: yq -i '(.builds[] | select(.id == "lotus-miner" or .id == "lotus-worker")).skip = false' '.goreleaser.yaml'
       - uses: goreleaser/goreleaser-action@7ec5c2b0c6cdda6e8bbb49444bc797dd33d74dd8 # v5.0.0
         with:
           distribution: goreleaser-pro
