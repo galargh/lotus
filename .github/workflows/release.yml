@@ -164,8 +164,9 @@ jobs:
         with:
           distribution: goreleaser-pro
           version: 2.0.1
-          args: release --clean
+          args: release --clean ${{ env.PUBLISH == 'false' && '--snapshot' || '' }}
         env:
+          PROJECT: ${{ matrix.project }}
           GITHUB_TOKEN: ${{ env.PUBLISH == 'true' && github.token || '' }}
           GORELEASER_KEY: ${{ env.PUBLISH == 'true' && secrets.GORELEASER_KEY || '' }}
           TAG: ${{ fromJSON(steps.project.outputs.config).tag }}
