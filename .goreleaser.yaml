@@ -105,7 +105,7 @@ brews:
     description: "A homebrew cask for installing filecoin-project/lotus on MacOS"
     license: MIT
     skip_upload: |
-      {{ if and (eq .IS_DRAFT "false") (eq .IS_LATEST "true") }}false{{ else }}true{{ end }}
+      {{ if and (eq .Env.IS_DRAFT "false") (eq .Env.IS_LATEST "true") }}false{{ else }}true{{ end }}
     dependencies:
       - name: hwloc
 # produced manually so we can include cid checksums
