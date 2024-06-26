@@ -45,18 +45,26 @@ jobs:
   build:
     needs: [check]
     if: needs.check.outputs.projects != '[]'
-    name: Build ${{ fromJSON(matrix.project).name }} (${{ matrix.runner }})
+    name: Build ${{ matrix.project }} (${{ matrix.runner }})
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        project: ${{ fromJSON(needs.check.outputs.projects) }}
+        project: ${{ fromJSON(needs.check.outputs.projects).*.name }}
         runner:
           - ubuntu-latest # Linux X64
           - macos-13 # MacOs X64
           - macos-14 # MacOS ARM64
     steps:
       - run: echo "Building on $RUNNER_OS/$RUNNER_ARCH"
+      - id: project
+        env:
+          projects: ${{ needs.check.outputs.projects }}
+          name: ${{ matrix.project }}
+        run: |
+          jq -nc 'env.projects | fromjson | map(select(.name == env.name))' |
+            xargs -I {} echo "config={}" |
+            tee -a $GITHUB_OUTPUT
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
@@ -65,11 +73,11 @@ jobs:
       - env:
           GITHUB_TOKEN: ${{ github.token }}
         run: make deps
-      - if: fromJSON(matrix.project).name == 'node'
+      - if: matrix.project == 'node'
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: make lotus
-      - if: fromJSON(matrix.project).name == 'miner'
+      - if: matrix.project == 'miner'
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: make lotus-miner lotus-worker
@@ -77,7 +85,7 @@ jobs:
         run: if [[ -f lotus ]]; then otool -hv lotus; fi
       - env:
           LOTUS_VERSION_IGNORE_COMMIT: 1
-          expected: ${{ fromJSON(matrix.project).version }}
+          expected: ${{ fromJSON(steps.project.outputs.config).version }}
         run: |
           for bin in lotus lotus-miner lotus-worker; do
             if [[ -f ./$bin ]]; then
@@ -91,7 +99,7 @@ jobs:
           done
       - uses: actions/upload-artifact@v4
         with:
-          name: lotus-${{ fromJSON(matrix.project).name }}-${{ runner.os }}-${{ runner.arch }}
+          name: lotus-${{ matrix.project }}-${{ runner.os }}-${{ runner.arch }}
           path: |
             lotus
             lotus-miner
@@ -107,23 +115,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: ${{ fromJSON(needs.check.outputs.projects) }}
+        project: ${{ fromJSON(needs.check.outputs.projects).*.name }}
     steps:
+      - id: project
+        env:
+          projects: ${{ needs.check.outputs.projects }}
+          name: ${{ matrix.project }}
+        run: |
+          jq -nc 'env.projects | fromjson | map(select(.name == env.name))' |
+            xargs -I {} echo "config={}" |
+            tee -a $GITHUB_OUTPUT
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
           fetch-depth: 0
       - uses: actions/download-artifact@v4
         with:
-          name: lotus-${{ fromJSON(matrix.project).name }}-Linux-X64
+          name: lotus-${{ matrix.project }}-Linux-X64
           path: linux_amd64_v1
       - uses: actions/download-artifact@v4
         with:
-          name: lotus-${{ fromJSON(matrix.project).name }}-macOS-X64
+          name: lotus-${{ matrix.project }}-macOS-X64
           path: darwin_amd64_v1
       - uses: actions/download-artifact@v4
         with:
-          name: lotus-${{ fromJSON(matrix.project).name }}-macOS-ARM64
+          name: lotus-${{ matrix.project }}-macOS-ARM64
           path: darwin_arm64
       - uses: ./.github/actions/install-go
       - uses: ipfs/download-ipfs-distribution-action@v1
@@ -133,9 +149,9 @@ jobs:
       - run: pip install yq
       - if: github.event_name != 'pull_request'
         run: yq -i '.release.draft = false' .goreleaser.yaml
-      - if: fromJSON(matrix.project).name == 'node'
+      - if: matrix.project == 'node'
         run: yq -i '.builds | map(select(.id == "lotus"))[0].skip = false' .goreleaser.yaml
-      - if: fromJSON(matrix.project).name == 'miner'
+      - if: matrix.project == 'miner'
         run: |
           yq -i '.builds | map(select(.id == "lotus-miner"))[0].skip = false' .goreleaser.yaml
           yq -i '.builds | map(select(.id == "lotus-worker"))[0].skip = false' .goreleaser.yaml
@@ -147,15 +163,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
           GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
-          TAG: ${{ fromJSON(matrix.project).tag }}
-          VERSION: ${{ fromJSON(matrix.project).version }}
-          IS_LATEST: ${{ fromJSON(matrix.project).latest }}
+          TAG: ${{ fromJSON(steps.project.outputs.config).tag }}
+          VERSION: ${{ fromJSON(steps.project.outputs.config).version }}
+          IS_LATEST: ${{ fromJSON(steps.project.outputs.config).latest }}
           IS_DRAFT: ${{ github.event_name == 'pull_request' }}
-          IS_PRERELEASE: ${{ fromJSON(matrix.project).prerelease }}
+          IS_PRERELEASE: ${{ fromJSON(steps.project.outputs.config).prerelease }}
           TARGET_COMMITISH: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.sha }}
           HEADER: '' # TODO(p3): Extract release notes from CHANGELOG.md
       - run: ./scripts/generate-checksums.sh
       - env:
           GITHUB_TOKEN: ${{ github.token }}
-          TAG: ${{ fromJSON(matrix.project).tag }}
+          TAG: ${{ fromJSON(steps.project.outputs.config).tag }}
         run: ./scripts/publish-checksums.sh
