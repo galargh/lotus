@@ -84,7 +84,7 @@ release:
   target_commitish: "{{ .Env.TARGET_COMMITISH }}"
 brews:
   - name: |
-      {{ if .Env.PROJECT eq "node" }}lotus{{ else }}lotus-{{ .Env.PROJECT }}{{ end }}"
+      {{ if eq .Env.PROJECT "node" }}lotus{{ else }}lotus-{{ .Env.PROJECT }}{{ end }}"
     repository:
       owner: filecoin-project
       name: homebrew-lotus
@@ -93,18 +93,19 @@ brews:
       - primary
     custom_block: ""
     install: |
-      {{ if .Env.PROJECT eq "node" }}bin.install "lotus"{{ end }}
-      {{ if .Env.PROJECT eq "miner" }}bin.install "lotus-miner"{{ end }}
-      {{ if .Env.PROJECT eq "miner" }}bin.install "lotus-worker"{{ end }}
+      {{ if eq .Env.PROJECT "node" }}bin.install "lotus"{{ end }}
+      {{ if eq .Env.PROJECT "miner" }}bin.install "lotus-miner"{{ end }}
+      {{ if eq .Env.PROJECT "miner" }}bin.install "lotus-worker"{{ end }}
     test: |
-      {{ if .Env.PROJECT eq "node" }}system "#{bin}/lotus --version"{{ end }}
-      {{ if .Env.PROJECT eq "miner" }}system "#{bin}/lotus-miner --version"{{ end }}
-      {{ if .Env.PROJECT eq "miner" }}system "#{bin}/lotus-worker --version"{{ end }}
+      {{ if eq .Env.PROJECT "node" }}system "#{bin}/lotus --version"{{ end }}
+      {{ if eq .Env.PROJECT "miner" }}system "#{bin}/lotus-miner --version"{{ end }}
+      {{ if eq .Env.PROJECT "miner" }}system "#{bin}/lotus-worker --version"{{ end }}
     directory: Formula
     homepage: "https://filecoin.io"
     description: "A homebrew cask for installing filecoin-project/lotus on MacOS"
     license: MIT
-    skip_upload: "{{ if and (eq .Env.IS_PRERELEASE "false") (eq .Env.IS_LATEST "true") (eq .Env.IS_DRAFT "false") }}false{{ else }}true{{ end }}"
+    skip_upload: |
+      {{ if and (eq .IS_DRAFT "false") (eq .IS_LATEST "true") }}false{{ else }}true{{ end }}
     dependencies:
       - name: hwloc
 # produced manually so we can include cid checksums
