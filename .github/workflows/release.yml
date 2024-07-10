@@ -236,9 +236,9 @@ jobs:
             fi
           done
           if [[ "$previous" != '' ]]; then
-            mkdir -p "$(go env GOPATH)/src/github.com/$GITHUB_REPOSITORY"
-            rm -rf "$(go env GOPATH)/src/github.com/$GITHUB_REPOSITORY"
-            ln -s "$(pwd)" "$(go env GOPATH)/src/github.com/$GITHUB_REPOSITORY"
+            mkdir -p "$(go env GOPATH)/src/github.com/filecoin-project/lotus"
+            rm -rf "$(go env GOPATH)/src/github.com/filecoin-project/lotus"
+            ln -s "$(pwd)" "$(go env GOPATH)/src/github.com/filecoin-project/lotus"
             ./scripts/mkreleaselog "$previous" "$current" | tee -a $GITHUB_OUTPUT
           fi
           echo "EOF" | tee -a $GITHUB_OUTPUT
