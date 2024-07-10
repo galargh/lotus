@@ -277,7 +277,7 @@ jobs:
             --field prerelease=$prerelease \
             --raw-field make_latest="$make_latest" \
             --raw-field discussion_category_name="$discussion_category_name" |
-            tee -a $GITHUB_OUTPUT
+            jq -r '.' | tee -a $GITHUB_OUTPUT
           echo "EOF" | tee -a $GITHUB_OUTPUT
       - name: Delete old assets
         env:
@@ -286,7 +286,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           while read -r asset_id; do
-            gh api -X DELETE /repos/$GITHUB_REPOSITORY/releases/$release_id/assets/$asset_id
+            gh api -X DELETE /repos/$GITHUB_REPOSITORY/releases/$release_id/assets/$asset_id |
+              jq -r '.'
           done <<< "$(jq '.[]' <<< "$asset_ids")"
       - name: Upload new assets
         env:
@@ -296,7 +297,7 @@ jobs:
           for asset in *.{tar.gz,cid,sha512}; do
             gh api -X POST /repos/$GITHUB_REPOSITORY/releases/$release_id/assets?name=$asset \
               --field "@$asset" |
-              jq -r '.id'
+              jq -r '.'
           done
       - name: Publish release
         if: github.event.inputs.publish == 'true' || github.event_name == 'push'
@@ -305,4 +306,5 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           gh api -X PATCH /repos/$GITHUB_REPOSITORY/releases/$release_id \
-            --field draft=false
+            --field draft=false |
+            jq -r '.'
