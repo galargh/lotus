@@ -275,7 +275,7 @@ jobs:
             --field body="$body" \
             --field draft=$draft \
             --field prerelease=$prerelease \
-            --field make_latest=$make_latest \
+            --field make_latest="$make_latest" \
             --field discussion_category_name="$discussion_category_name" |
             tee -a $GITHUB_OUTPUT
           echo "EOF" | tee -a $GITHUB_OUTPUT
