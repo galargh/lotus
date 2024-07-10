@@ -182,7 +182,7 @@ jobs:
         with:
           name: lotus-${{ matrix.project }}-macOS-ARM64
           path: darwin_arm64
-      - name: Install Go (archives generation dependency)
+      - name: Install Go (changelog & archives generation dependency)
         uses: ./.github/actions/install-go
       - name: Install makefat (archives generation dependency)
         run: go install github.com/randall77/makefat@7ddd0e42c8442593c87c1705a5545099604008e5
@@ -252,6 +252,10 @@ jobs:
           gh api --paginate /repos/$GITHUB_REPOSITORY/releases --jq 'map(select(.tag_name == env.tag))' |
             jq -s add | jq -r '.[0]' | tee -a $GITHUB_OUTPUT
           echo "EOF" | tee -a $GITHUB_OUTPUT
+      - name: Increase ulimit
+        run: |
+          ulimit -s unlimited
+          ulimit -a
       - name: Create or update release
         id: after
         env:
@@ -297,11 +301,12 @@ jobs:
           release_id: ${{ fromJSON(steps.after.outputs.release).id }}
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          for asset in *.{tar.gz,cid,sha512}; do
+          for asset in *.tar.gz *.cid *.sha512; do
             gh api -X POST /repos/$GITHUB_REPOSITORY/releases/$release_id/assets?name=$asset \
               --field "@$asset" |
               jq -r '.'
           done
+        working-directory: dist
       - name: Publish release
         if: github.event.inputs.publish == 'true' || github.event_name == 'push'
         env:
