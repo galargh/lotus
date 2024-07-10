@@ -31,9 +31,9 @@ jobs:
           current: 7e6c72e312f8da5052d6c4613af608bab3ca421c
         run: |
           echo "content<<EOF" | tee -a $GITHUB_OUTPUT
-          echo "$(go env GOPATH)/src/github.com/$GITHUB_REPOSITORY"
-          mkdir -p "$(go env GOPATH)/src/github.com/$GITHUB_REPOSITORY"
-          rm -rf "$(go env GOPATH)/src/github.com/$GITHUB_REPOSITORY"
-          ln -s "$(pwd)" "$(go env GOPATH)/src/github.com/$GITHUB_REPOSITORY"
+          echo "$(go env GOPATH)/src/github.com/filecoin-project/lotus"
+          mkdir -p "$(go env GOPATH)/src/github.com/filecoin-project/lotus"
+          rm -rf "$(go env GOPATH)/src/github.com/filecoin-project/lotus"
+          ln -s "$(pwd)" "$(go env GOPATH)/src/github.com/filecoin-project/lotus"
           ./scripts/mkreleaselog "$previous" "$current" | tee -a $GITHUB_OUTPUT
           echo "EOF" | tee -a $GITHUB_OUTPUT
