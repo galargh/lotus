@@ -269,14 +269,14 @@ jobs:
         run: |
           echo "release<<EOF" | tee -a $GITHUB_OUTPUT
           gh api -X "$method" "$endpoint" \
-            --field tag_name="$tag_name" \
-            --field target_commitish="$target_commitish" \
-            --field name="$name" \
-            --field body="$body" \
+            --raw-field tag_name="$tag_name" \
+            --raw-field target_commitish="$target_commitish" \
+            --raw-field name="$name" \
+            --raw-field body="$body" \
             --field draft=$draft \
             --field prerelease=$prerelease \
-            --field make_latest="$make_latest" \
-            --field discussion_category_name="$discussion_category_name" |
+            --raw-field make_latest="$make_latest" \
+            --raw-field discussion_category_name="$discussion_category_name" |
             tee -a $GITHUB_OUTPUT
           echo "EOF" | tee -a $GITHUB_OUTPUT
       - name: Delete old assets
