@@ -254,10 +254,6 @@ jobs:
           gh api --paginate /repos/$GITHUB_REPOSITORY/releases --jq 'map(select(.tag_name == env.tag))' |
             jq -s add | jq -r 'map({"id": .id, "draft": .draft, "html_url": .html_url}) | .[0]' | tee -a $GITHUB_OUTPUT
           echo "EOF" | tee -a $GITHUB_OUTPUT
-      - name: Increase ulimit
-        run: |
-          ulimit -s unlimited
-          ulimit -a
       - name: Create or update release
         id: after
         env:
@@ -277,7 +273,7 @@ jobs:
             --raw-field tag_name="$tag_name" \
             --raw-field target_commitish="$target_commitish" \
             --raw-field name="$name" \
-            --raw-field body="$(cat release_body.md | head -n 1000)" \
+            --raw-field body="$(cat release_body.md | head -c 125000)" \
             --field draft=$draft \
             --field prerelease=$prerelease \
             --raw-field make_latest="$make_latest" \
@@ -307,8 +303,14 @@ jobs:
             if [[ ! -f "$asset" ]]; then
               continue
             fi
-            gh api -X POST /repos/$GITHUB_REPOSITORY/releases/$release_id/assets?name=$asset \
-              --raw-field "@$asset" |
+            curl -L \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer $GITHUB_TOKEN" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              -H "Content-Type: application/octet-stream" \
+              "https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$release_id/assets?name=$asset" \
+              --data-binary "@$asset" |
               jq -r '.'
           done
         working-directory: dist
