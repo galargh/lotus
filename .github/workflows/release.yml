@@ -182,7 +182,7 @@ jobs:
         with:
           name: lotus-${{ matrix.project }}-macOS-ARM64
           path: darwin_arm64
-      - name: Install Go (changelog & archives generation dependency)
+      - name: Install Go (release body & archives generation dependency)
         uses: ./.github/actions/install-go
       - name: Install makefat (archives generation dependency)
         run: go install github.com/randall77/makefat@7ddd0e42c8442593c87c1705a5545099604008e5
@@ -200,13 +200,14 @@ jobs:
             makefat ./darwin_all/$binary ./darwin_amd64_v1/$binary ./darwin_arm64/$binary
           done <<< "$(jq -r '.[]' <<< "$binaries")"
           mkdir dist
+          pushd dist
           for directory in darwin_all linux_amd64_v1; do
-            cp -r $directory dist/$prefix_v$version_$directory
-            pushd dist
-            tar -czf $prefix_v$version_$directory.tar.gz $prefix_v$version_$directory
-            rm -r $prefix_v$version_$directory
-            popd
+            archive_name="${prefix}_v${version}_${directory}"
+            cp -r ../$directory dist/$archive_name
+            tar -czf $archive_name.tar.gz $archive_name
+            rm -r $archive_name
           done
+          popd
           ls -la dist
       - name: Install Kubo (checksums generation dependency)
         uses: ipfs/download-ipfs-distribution-action@v1
@@ -218,7 +219,7 @@ jobs:
         run: |
           ./scripts/generate-checksums.sh
           ls -la dist
-      - name: Install zsh (changelog generation dependency)
+      - name: Install zsh (release body generation dependency)
         run: sudo apt update && sudo apt install -y zsh
       - name: Generate release body
         env:
@@ -307,7 +308,7 @@ jobs:
               continue
             fi
             gh api -X POST /repos/$GITHUB_REPOSITORY/releases/$release_id/assets?name=$asset \
-              --field "@$asset" |
+              --raw-field "@$asset" |
               jq -r '.'
           done
         working-directory: dist
