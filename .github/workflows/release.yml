@@ -200,13 +200,14 @@ jobs:
             makefat ./darwin_all/$binary ./darwin_amd64_v1/$binary ./darwin_arm64/$binary
           done <<< "$(jq -r '.[]' <<< "$binaries")"
           mkdir dist
-          pushd dist
           for directory in darwin_all linux_amd64_v1; do
-            cp -r ../$directory $prefix_v$version_$directory
-            tar -czf $prefix_v$version_$directory.tar.gz $directory
+            cp -r $directory dist/$prefix_v$version_$directory
+            pushd dist
+            tar -czf $prefix_v$version_$directory.tar.gz $prefix_v$version_$directory
             rm -r $prefix_v$version_$directory
+            popd
           done
-          popd
+          ls -la dist
       - name: Install Kubo (checksums generation dependency)
         uses: ipfs/download-ipfs-distribution-action@v1
         with:
@@ -214,24 +215,24 @@ jobs:
           version: v0.16.0
           cache: false
       - name: Generate checksums
-        run: ./scripts/generate-checksums.sh
+        run: |
+          ./scripts/generate-checksums.sh
+          ls -la dist
       - name: Install zsh (changelog generation dependency)
         run: sudo apt update && sudo apt install -y zsh
-      - name: Generate changelog
-        id: changelog
+      - name: Generate release body
         env:
           tag: ${{ fromJSON(steps.project.outputs.config).tag }}
           previous: ${{ fromJSON(steps.project.outputs.config).previous }}
           current: ${{ github.event.inputs.ref || github.sha }}
         run: |
-          echo "content<<EOF" | tee -a $GITHUB_OUTPUT
-          echo "# $tag" | tee -a $GITHUB_OUTPUT
-          echo "" | tee -a $GITHUB_OUTPUT
+          echo "# $tag" > realease_body.md
+          echo "" > realease_body.md
           csplit --digits=4 --quiet --elide-empty-files CHANGELOG.md '/^# /' '{*}'
           # Checking the files in reverse order to get to the UNRELEASED section last
           for file in $(ls -r xx*); do
             if grep -q "^# $tag " $file || grep -q "^# UNRELEASED" $file; then
-              tail -n +3 $file | tee -a $GITHUB_OUTPUT
+              tail -n +3 $file > realease_body.md
               break
             fi
           done
@@ -239,9 +240,9 @@ jobs:
             mkdir -p "$(go env GOPATH)/src/github.com/filecoin-project/lotus"
             rm -rf "$(go env GOPATH)/src/github.com/filecoin-project/lotus"
             ln -s "$(pwd)" "$(go env GOPATH)/src/github.com/filecoin-project/lotus"
-            ./scripts/mkreleaselog "$previous" "$current" | tee -a $GITHUB_OUTPUT
+            ./scripts/mkreleaselog "$previous" "$current" > realease_body.md
           fi
-          echo "EOF" | tee -a $GITHUB_OUTPUT
+          cat realease_body.md
       - name: Find release
         id: before
         env:
@@ -250,7 +251,7 @@ jobs:
         run: |
           echo "release<<EOF" | tee -a $GITHUB_OUTPUT
           gh api --paginate /repos/$GITHUB_REPOSITORY/releases --jq 'map(select(.tag_name == env.tag))' |
-            jq -s add | jq -r '.[0]' | tee -a $GITHUB_OUTPUT
+            jq -s add | jq -r 'map({"id": .id, "draft": .draft, "html_url": .html_url}) | .[0]' | tee -a $GITHUB_OUTPUT
           echo "EOF" | tee -a $GITHUB_OUTPUT
       - name: Increase ulimit
         run: |
@@ -264,7 +265,6 @@ jobs:
           tag_name: ${{ fromJSON(steps.project.outputs.config).tag }}
           target_commitish: ${{ github.event.inputs.ref || github.base_ref || github.ref }}
           name: ${{ fromJSON(steps.project.outputs.config).tag }}
-          body: ${{ steps.changelog.outputs.content }}
           draft: ${{ steps.before.outputs.release == 'null' && true || fromJSON(steps.before.outputs.release).draft }}
           prerelease: ${{ fromJSON(steps.project.outputs.config).prerelease }}
           make_latest: ${{ fromJSON(steps.project.outputs.config).latest }}
@@ -276,12 +276,13 @@ jobs:
             --raw-field tag_name="$tag_name" \
             --raw-field target_commitish="$target_commitish" \
             --raw-field name="$name" \
-            --raw-field body="$body" \
+            --raw-field body="$(cat release_body.md | head -n 1000)" \
             --field draft=$draft \
             --field prerelease=$prerelease \
             --raw-field make_latest="$make_latest" \
             --raw-field discussion_category_name="$discussion_category_name" |
-            jq -r '.' | tee -a $GITHUB_OUTPUT
+            jq -r '{"id": .id, "assets": (.assets | map({"id": .id})), "html_url": .html_url}' |
+            tee -a $GITHUB_OUTPUT
           echo "EOF" | tee -a $GITHUB_OUTPUT
       - name: Delete old assets
         env:
@@ -302,6 +303,9 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           for asset in *.tar.gz *.cid *.sha512; do
+            if [[ ! -f "$asset" ]]; then
+              continue
+            fi
             gh api -X POST /repos/$GITHUB_REPOSITORY/releases/$release_id/assets?name=$asset \
               --field "@$asset" |
               jq -r '.'
