@@ -227,13 +227,13 @@ jobs:
           previous: ${{ fromJSON(steps.project.outputs.config).previous }}
           current: ${{ github.event.inputs.ref || github.sha }}
         run: |
-          echo "# $tag" > realease_body.md
-          echo "" > realease_body.md
+          echo "# $tag" > release_body.md
+          echo "" >> release_body.md
           csplit --digits=4 --quiet --elide-empty-files CHANGELOG.md '/^# /' '{*}'
           # Checking the files in reverse order to get to the UNRELEASED section last
           for file in $(ls -r xx*); do
             if grep -q "^# $tag " $file || grep -q "^# UNRELEASED" $file; then
-              tail -n +3 $file > realease_body.md
+              tail -n +3 $file >> release_body.md
               break
             fi
           done
@@ -241,9 +241,9 @@ jobs:
             mkdir -p "$(go env GOPATH)/src/github.com/filecoin-project/lotus"
             rm -rf "$(go env GOPATH)/src/github.com/filecoin-project/lotus"
             ln -s "$(pwd)" "$(go env GOPATH)/src/github.com/filecoin-project/lotus"
-            ./scripts/mkreleaselog "$previous" "$current" > realease_body.md
+            ./scripts/mkreleaselog "$previous" "$current" >> release_body.md
           fi
-          cat realease_body.md
+          cat release_body.md
       - name: Find release
         id: before
         env:
