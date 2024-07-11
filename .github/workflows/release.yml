@@ -203,7 +203,7 @@ jobs:
           pushd dist
           for directory in darwin_all linux_amd64_v1; do
             archive_name="${prefix}_v${version}_${directory}"
-            cp -r ../$directory dist/$archive_name
+            cp -r ../$directory $archive_name
             tar -czf $archive_name.tar.gz $archive_name
             rm -r $archive_name
           done
