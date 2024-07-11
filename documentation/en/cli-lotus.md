@@ -7,7 +7,7 @@ USAGE:
    lotus [global options] command [command options] [arguments...]
 
 VERSION:
-   1.27.1
+   1.28.0
 
 COMMANDS:
    daemon   Start a lotus daemon process
@@ -335,7 +335,7 @@ NAME:
    lotus wallet delete - Soft delete an address from the wallet - hard deletion needed for permanent removal
 
 USAGE:
-   lotus wallet delete [command options] <address> 
+   lotus wallet delete [command options] <address>
 
 OPTIONS:
    --help, -h  show help
@@ -1089,7 +1089,7 @@ COMMANDS:
    find      find a message in the mempool
    config    get or set current mpool configuration
    gas-perf  Check gas performance of messages in mempool
-   manage    
+   manage
    help, h   Shows a list of commands or help for one command
 
 OPTIONS:
@@ -1895,7 +1895,7 @@ USAGE:
    lotus chain decode params [command options] [toAddr method params]
 
 OPTIONS:
-   --tipset value    
+   --tipset value
    --encoding value  specify input encoding to parse (default: "base64")
    --help, -h        show help
 ```
@@ -1925,7 +1925,7 @@ USAGE:
    lotus chain encode params [command options] [dest method params]
 
 OPTIONS:
-   --tipset value    
+   --tipset value
    --encoding value  specify input encoding to parse (default: "base64")
    --to-code         interpret dest as code CID instead of as address (default: false)
    --help, -h        show help

@@ -7,7 +7,7 @@ USAGE:
    lotus-miner [global options] command [command options] [arguments...]
 
 VERSION:
-   1.27.1
+   1.28.0
 
 COMMANDS:
    init          Initialize a lotus miner repo
@@ -1231,7 +1231,7 @@ DESCRIPTION:
    Store
    Finalized sectors that will be moved here for long term storage and be proven
    over time
-      
+
 
 OPTIONS:
    --init                                 initialize the path first (default: false)
