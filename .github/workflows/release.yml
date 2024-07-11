@@ -284,14 +284,13 @@ jobs:
       - name: Delete old assets
         env:
           asset_ids: ${{ toJSON(fromJSON(steps.after.outputs.release).assets.*.id) }}
-          release_id: ${{ fromJSON(steps.after.outputs.release).id }}
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           while read -r asset_id; do
             if [[ -z "$asset_id" ]]; then
               continue
             fi
-            gh api -X DELETE /repos/$GITHUB_REPOSITORY/releases/$release_id/assets/$asset_id |
+            gh api -X DELETE /repos/$GITHUB_REPOSITORY/releases/assets/$asset_id |
               jq -r '.'
           done <<< "$(jq '.[]' <<< "$asset_ids")"
       - name: Upload new assets
