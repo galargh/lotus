@@ -233,10 +233,10 @@ jobs:
         env:
           tag: ${{ fromJSON(steps.project.outputs.config).tag }}
           previous: ${{ fromJSON(steps.project.outputs.config).previous }}
-          body: ${{ fromJSON(steps.before.outputs.release).body }}
+          body: ${{ steps.before.outputs.release == 'null' && '' || fromJSON(steps.before.outputs.release).body }}
           current: ${{ github.event.inputs.ref || github.sha }}
         run: |
-          if [[ -z "$body" ]]; then
+          if [[ -n "$body" ]]; then
             echo "$body" >> release_body.md
           else
             csplit --digits=4 --quiet --elide-empty-files CHANGELOG.md '/^# /' '{*}'
