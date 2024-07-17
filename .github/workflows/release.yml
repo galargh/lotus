@@ -251,6 +251,8 @@ jobs:
               mkdir -p "$(go env GOPATH)/src/github.com/filecoin-project/lotus"
               rm -rf "$(go env GOPATH)/src/github.com/filecoin-project/lotus"
               ln -s "$(pwd)" "$(go env GOPATH)/src/github.com/filecoin-project/lotus"
+              echo "## Release Log" >> release_body.md
+              echo "" >> release_body.md
               ./scripts/mkreleaselog "$previous" "$current" >> release_body.md
             fi
           fi
