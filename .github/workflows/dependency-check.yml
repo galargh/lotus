@@ -23,19 +23,19 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
       - id: unreleased
         env:
-          ALL_DEPENDENCIES: ${{ steps.all.outputs.dependencies }}
+          DEPENDENCIES: ${{ steps.all.outputs.dependencies }}
         run: |
           echo "dependencies<<EOF" >> $GITHUB_OUTPUT
           # Find all dependencies that use prerelease versions (exclude v0.0.0 versions)
-          grep -Pv 'v0\.0\.0|v[0-9]+\.[0-9]+\.[0-9]+(\s|$)' <<< "$RELEASED_DEPENDENCIES" | tee -a $GITHUB_OUTPUT
+          grep -Pv 'v0\.0\.0|v[0-9]+\.[0-9]+\.[0-9]+(\s|$)' <<< "$DEPENDENCIES" | tee -a $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
       - id: unexplained
         env:
-          UNRELEASED_DEPENDENCIES: ${{ steps.unreleased.outputs.dependencies }}
+          DEPENDENCIES: ${{ steps.unreleased.outputs.dependencies }}
         run: |
           echo "dependencies<<EOF" >> $GITHUB_OUTPUT
           # Find all unreleased dependencies without a dependency-check-ignore comment
-          grep -Pv 'dependency-check-ignore:\s' <<< "$UNRELEASED_DEPENDENCIES" | tee -a $GITHUB_OUTPUT
+          grep -Pv 'dependency-check-ignore:\s' <<< "$DEPENDENCIES" | tee -a $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
       - if: steps.unexplained.outputs.dependencies != ''
         env:
