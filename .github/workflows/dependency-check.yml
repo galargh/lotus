@@ -27,7 +27,7 @@ jobs:
         run: |
           echo "dependencies<<EOF" >> $GITHUB_OUTPUT
           # Find all dependencies that use prerelease versions (exclude v0.0.0 versions)
-          grep -Pv 'v0\.0\.0|v[0-9]+\.[0-9]+\.[0-9]+(\s|$)' <<< "$DEPENDENCIES" | tee -a $GITHUB_OUTPUT
+          grep -Pv 'v0\.0\.0|v[0-9]+\.[0-9]+\.[0-9]+([^-]|$)' <<< "$DEPENDENCIES" | tee -a $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
       - id: unexplained
         env:
